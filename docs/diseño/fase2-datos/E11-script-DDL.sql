@@ -1,7 +1,7 @@
 -- ============================================================
 -- SIGAU — Sistema de Información y Gestión Académica Universitaria
 -- Script DDL — Creación de tablas en 3FN
--- Motor: MySQL 8.0
+-- Motor: MySQL 9.6.0
 -- Autor: Maddox Lasciche
 -- ============================================================
 
@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS CONSULTA;
 DROP TABLE IF EXISTS RUTA;
 DROP TABLE IF EXISTS UBICACION;
 DROP TABLE IF EXISTS ASIGNACION;
+DROP TABLE IF EXISTS HORARIO;
 DROP TABLE IF EXISTS AULA;
 DROP TABLE IF EXISTS PISO;
 DROP TABLE IF EXISTS TORRE;
@@ -121,7 +122,7 @@ CREATE TABLE AULA (
     codigo_aula     VARCHAR(20)  NOT NULL UNIQUE,
     capacidad       INT          NOT NULL,
     tipo_aula       VARCHAR(50),
-    disponible      BOOLEAN      NOT NULL DEFAULT TRUE,
+    estado          ENUM('DISPONIBLE','OCUPADA','MANTENIMIENTO') NOT NULL DEFAULT 'DISPONIBLE',
     id_piso         INT          NOT NULL,
     CONSTRAINT fk_aula_piso FOREIGN KEY (id_piso) REFERENCES PISO(id_piso)
 ) ENGINE=InnoDB;
@@ -136,22 +137,31 @@ CREATE TABLE UBICACION (
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- TABLA DE ASIGNACION (HORARIO)
+-- TABLA DE HORARIO
+-- ============================================================
+
+CREATE TABLE HORARIO (
+    id_horario  INT AUTO_INCREMENT PRIMARY KEY,
+    dia_semana  ENUM('Lunes','Martes','Miércoles','Jueves','Viernes','Sábado') NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin    TIME NOT NULL
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- TABLA DE ASIGNACION
 -- ============================================================
 
 CREATE TABLE ASIGNACION (
     id_asignacion   INT AUTO_INCREMENT PRIMARY KEY,
-    dia_semana      VARCHAR(20)  NOT NULL,
-    hora_inicio     TIME         NOT NULL,
-    hora_fin        TIME         NOT NULL,
-    id_materia      INT          NOT NULL,
+    periodo         VARCHAR(20)  NOT NULL,
+    materia         VARCHAR(100) NOT NULL,
+    estado          ENUM('ACTIVA','INACTIVA','CANCELADA') NOT NULL DEFAULT 'ACTIVA',
     id_docente      INT          NOT NULL,
     id_aula         INT          NOT NULL,
-    id_estudiante   INT          NOT NULL,
-    CONSTRAINT fk_asignacion_materia    FOREIGN KEY (id_materia)    REFERENCES MATERIA(id_materia),
-    CONSTRAINT fk_asignacion_docente    FOREIGN KEY (id_docente)    REFERENCES DOCENTE(id_docente),
-    CONSTRAINT fk_asignacion_aula       FOREIGN KEY (id_aula)       REFERENCES AULA(id_aula),
-    CONSTRAINT fk_asignacion_estudiante FOREIGN KEY (id_estudiante) REFERENCES ESTUDIANTE(id_estudiante)
+    id_horario      INT          NOT NULL,
+    CONSTRAINT fk_asignacion_docente  FOREIGN KEY (id_docente)  REFERENCES DOCENTE(id_docente),
+    CONSTRAINT fk_asignacion_aula     FOREIGN KEY (id_aula)     REFERENCES AULA(id_aula),
+    CONSTRAINT fk_asignacion_horario  FOREIGN KEY (id_horario)  REFERENCES HORARIO(id_horario)
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -196,13 +206,12 @@ CREATE TABLE HISTORIAL (
 
 CREATE TABLE NOTIFICACION (
     id_notificacion INT AUTO_INCREMENT PRIMARY KEY,
-    titulo          VARCHAR(150) NOT NULL,
+    titulo          VARCHAR(100) NOT NULL,
     mensaje         TEXT         NOT NULL,
-    tipo            VARCHAR(50)  NOT NULL,
-    leida           BOOLEAN      NOT NULL DEFAULT FALSE,
-    fecha_envio     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    id_estudiante   INT          NOT NULL,
-    CONSTRAINT fk_notificacion_estudiante FOREIGN KEY (id_estudiante) REFERENCES ESTUDIANTE(id_estudiante)
+    fecha_envio     DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    estado          ENUM('ENVIADA','LEIDA','ELIMINADA') NOT NULL DEFAULT 'ENVIADA',
+    id_usuario      INT          NOT NULL,
+    CONSTRAINT fk_notificacion_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIOS(id_usuario)
 ) ENGINE=InnoDB;
 
 CREATE TABLE REPORTE_SOPORTE (
@@ -224,11 +233,11 @@ CREATE INDEX idx_usuarios_correo         ON USUARIOS(correo);
 CREATE INDEX idx_estudiante_codigo       ON ESTUDIANTE(codigo_estudiantil);
 CREATE INDEX idx_materia_codigo          ON MATERIA(codigo_materia);
 CREATE INDEX idx_aula_codigo             ON AULA(codigo_aula);
-CREATE INDEX idx_asignacion_estudiante   ON ASIGNACION(id_estudiante);
+CREATE INDEX idx_asignacion_docente      ON ASIGNACION(id_docente);
 CREATE INDEX idx_asignacion_aula         ON ASIGNACION(id_aula);
 CREATE INDEX idx_consulta_estudiante     ON CONSULTA(id_estudiante);
 CREATE INDEX idx_historial_estudiante    ON HISTORIAL(id_estudiante);
-CREATE INDEX idx_notificacion_estudiante ON NOTIFICACION(id_estudiante);
+CREATE INDEX idx_notificacion_usuario    ON NOTIFICACION(id_usuario);
 CREATE INDEX idx_reporte_estudiante      ON REPORTE_SOPORTE(id_estudiante);
 
 -- ============================================================
