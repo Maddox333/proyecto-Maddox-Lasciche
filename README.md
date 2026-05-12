@@ -11,10 +11,10 @@ consultar su horario académico, localizar aulas en el campus y calcular rutas h
 `RUTA`, `CONSULTA`, `HISTORIAL`, `NOTIFICACION`, `REPORTE_SOPORTE`
 
 ## ¿Qué framework elegiste y por qué?
-**Framework:** Django (Python)  
-**Razón:** Arquitectura MTV alineada con los componentes del E5, ORM robusto
-para mapear el modelo relacional del E9-E10, y admin panel integrado útil
-para el rol Administrador definido en el MER.
+**Framework:** NestJS (Node.js + TypeScript)
+**Razón:** Arquitectura modular basada en módulos, controladores y servicios que se alinea
+con los componentes del E5, integración nativa con TypeORM para mapear el modelo relacional
+del E9-E10, y separación clara de responsabilidades compatible con los roles definidos en el MER.
 
 ## ¿Cómo ejecutar el proyecto?
 ```bash
@@ -22,3 +22,13 @@ para el rol Administrador definido en el MER.
 git clone https://github.com/Maddox333/proyecto-Maddox-Lasciche.git
 cd proyecto-Maddox-Lasciche
 
+# Instalar dependencias
+cd src/sigau-backend
+npm install
+
+# Configurar base de datos en .env
+# Ejecutar migraciones
+npx typeorm migration:run
+
+# Iniciar servidor
+npm run start:dev
