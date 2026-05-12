@@ -22,7 +22,7 @@ concretos.
 | A2 | Servicio | Lógica de negocio encapsulada (autenticación, búsqueda, cálculo de rutas) |
 | A3 | Entidad | Objetos del dominio persistidos en la base de datos |
 | A4 | Repositorio | Acceso y gestión de datos en la base de datos |
-| A5 | Controlador | Manejo de peticiones HTTP y respuestas (vistas Django) |
+| A5 | Controlador | Manejo de peticiones HTTP y respuestas (routers Express + factory CRUD) |
 | A6 | Interfaz | Pantallas y componentes de la interfaz de usuario |
 | A7 | Notificador | Gestión y envío de notificaciones a usuarios |
 | A8 | Reportador | Gestión de reportes de soporte y fallos |
@@ -52,7 +52,7 @@ concretos.
 | Clases asociadas | Usuarios, Estudiante, Docente, Administrador |
 | CU principales | CU-01 Iniciar Sesión, CU-02 Cerrar Sesión |
 | RF principales | RF-01 Autenticación, RF-02 Control de acceso por rol |
-| Implementación Django | `AbstractUser` o modelo `Usuarios` con FK a `ROL` |
+| Implementación | Modelo Sequelize `Usuario` (`src/models/Usuario.js`) con FK `id_rol` → `ROL`; hashing con bcryptjs en hooks `beforeCreate`/`beforeUpdate` |
 
 ### A2 — Servicio
 | Elemento | Detalle |
@@ -60,39 +60,39 @@ concretos.
 | Clases asociadas | AuthService, BusquedaService, RutaService |
 | CU principales | CU-01 Iniciar Sesión, CU-03 Buscar Aula, CU-12 Calcular Ruta |
 | RF principales | RF-01, RF-03, RF-12 |
-| Implementación Django | Módulos en `services.py` por aplicación |
+| Implementación | Servicios en `src/services/<dominio>.js` (Node.js) que orquestan modelos Sequelize |
 
 ### A3 — Entidad
 | Elemento | Detalle |
 |---|---|
-| Clases asociadas | Todas las entidades del MER (16 tablas) |
+| Clases asociadas | Todas las entidades del MER (18 tablas) |
 | CU principales | CU-03, CU-04, CU-05, CU-06, CU-07, CU-08 |
 | RF principales | RF-03 al RF-11 |
-| Implementación Django | Modelos en `models.py` por aplicación |
+| Implementación | Modelos Sequelize en `src/models/*.js` (uno por entidad), asociaciones declaradas en `src/models/index.js` |
 
 ### A4 — Repositorio
 | Elemento | Detalle |
 |---|---|
-| Clases asociadas | Django ORM (QuerySets) |
+| Clases asociadas | Sequelize ORM (`findAll`, `findByPk`, `create`, `update`, `destroy`) |
 | CU principales | CU-03, CU-04, CU-05, CU-08, CU-09, CU-10 |
 | RF principales | RF-03 al RF-10 |
-| Implementación Django | Managers y QuerySets en `models.py` |
+| Implementación | Métodos del Model y scopes Sequelize; CRUD genérico en `src/utils/crudFactory.js` |
 
 ### A5 — Controlador
 | Elemento | Detalle |
 |---|---|
-| Clases asociadas | Vistas Django (Class-Based Views) |
+| Clases asociadas | Routers Express (`Router()`), factory `buildCrudRouter` |
 | CU principales | Todos los CU |
 | RF principales | Todos los RF |
-| Implementación Django | `views.py` con `ListView`, `DetailView`, `CreateView`, etc. |
+| Implementación | `src/routes/index.js` consume `buildCrudRouter(Model, { include })` por entidad |
 
 ### A6 — Interfaz
 | Elemento | Detalle |
 |---|---|
-| Clases asociadas | Templates HTML + Bootstrap 5 |
+| Clases asociadas | Componentes React (JSX) + TailwindCSS/Bootstrap 5 |
 | CU principales | CU-01, CU-03, CU-04, CU-05, CU-11, CU-12 |
 | RF principales | RF-01, RF-03, RF-04, RF-11, RF-12 |
-| Implementación Django | Templates en `templates/` con herencia de `base.html` |
+| Implementación | SPA React (Vite) consumiendo el API REST `/api/*`; componentes en `frontend/src/components/` y vistas en `frontend/src/pages/` |
 
 ### A7 — Notificador
 | Elemento | Detalle |
@@ -100,7 +100,7 @@ concretos.
 | Clases asociadas | Notificacion |
 | CU principales | CU-14 Enviar Notificación, CU-15 Ver Notificaciones |
 | RF principales | RF-14 |
-| Implementación Django | App `notificaciones` con modelo y vistas propias |
+| Implementación | Modelo `Notificacion` (Sequelize) + endpoint `/api/notificaciones` + componente React `NotificationCenter` |
 
 ### A8 — Reportador
 | Elemento | Detalle |
@@ -108,7 +108,7 @@ concretos.
 | Clases asociadas | ReporteSoporte |
 | CU principales | CU-16 Reportar Fallo, CU-17 Gestionar Reportes |
 | RF principales | RF-15, RF-16 |
-| Implementación Django | App `soporte` con modelo y vistas propias |
+| Implementación | Modelo `ReporteSoporte` (Sequelize) + endpoint `/api/reportes-soporte` + componente React `SupportTicketForm` |
 
 ---
 

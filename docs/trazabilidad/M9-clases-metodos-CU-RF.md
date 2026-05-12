@@ -11,23 +11,26 @@ Esta matriz relaciona las clases del diagrama de clases con sus métodos
 y los Requisitos Funcionales (RF) que cada método satisface, verificando
 que toda la lógica de negocio está cubierta por la implementación.
 
+Los ejemplos de implementación usan **Sequelize 6 sobre Node.js + Express**
+y consumen los modelos definidos en `src/models/`.
+
 ---
 
 ## Clases del Sistema
 
-| # | Clase | App Django | Responsabilidad |
+| # | Clase | Módulo (backend) | Responsabilidad |
 |---|---|---|---|
-| CL1 | UsuarioManager | autenticacion | Gestión de autenticación y sesiones |
-| CL2 | RolManager | autenticacion | Control de acceso por rol |
-| CL3 | EstudianteManager | usuarios | Gestión del perfil de estudiante |
-| CL4 | DocenteManager | usuarios | Gestión del perfil de docente |
-| CL5 | AdministradorManager | usuarios | Gestión del perfil de administrador |
-| CL6 | AulaManager | infraestructura | Gestión de aulas |
-| CL7 | MapaManager | mapa | Mapa interactivo y rutas |
-| CL8 | ConsultaManager | consultas | Historial de consultas |
-| CL9 | AsignacionManager | academico | Gestión de asignaciones |
-| CL10 | NotificacionManager | notificaciones | Envío de notificaciones |
-| CL11 | SoporteManager | soporte | Gestión de reportes |
+| CL1 | UsuarioService | autenticacion | Gestión de autenticación y sesiones |
+| CL2 | RolService | autenticacion | Control de acceso por rol |
+| CL3 | EstudianteService | usuarios | Gestión del perfil de estudiante |
+| CL4 | DocenteService | usuarios | Gestión del perfil de docente |
+| CL5 | AdministradorService | usuarios | Gestión del perfil de administrador |
+| CL6 | AulaService | infraestructura | Gestión de aulas |
+| CL7 | MapaService | mapa | Mapa interactivo y rutas |
+| CL8 | ConsultaService | consultas | Historial de consultas |
+| CL9 | AsignacionService | academico | Gestión de asignaciones |
+| CL10 | NotificacionService | notificaciones | Envío de notificaciones |
+| CL11 | SoporteService | soporte | Gestión de reportes |
 
 ---
 
@@ -35,302 +38,388 @@ que toda la lógica de negocio está cubierta por la implementación.
 
 | Clase | Métodos | RF Cubiertos |
 |---|---|---|
-| CL1 — UsuarioManager | login(), logout(), cambiar_password() | RF-01 |
-| CL2 — RolManager | verificar_rol(), asignar_rol(), obtener_permisos() | RF-02 |
-| CL3 — EstudianteManager | registrar(), actualizar(), obtener_horario(), buscar_aula() | RF-03, RF-04, RF-05 |
-| CL4 — DocenteManager | registrar(), actualizar(), obtener_horario(), obtener_aulas() | RF-06, RF-07 |
-| CL5 — AdministradorManager | gestionar_usuarios(), gestionar_aulas(), gestionar_asignaciones() | RF-08, RF-09, RF-10 |
-| CL6 — AulaManager | crear(), actualizar(), eliminar(), cambiar_estado(), buscar() | RF-08, RF-11 |
-| CL7 — MapaManager | mostrar_mapa(), calcular_ruta(), obtener_ubicacion() | RF-11, RF-12 |
-| CL8 — ConsultaManager | registrar_consulta(), obtener_historial(), filtrar() | RF-05, RF-13 |
-| CL9 — AsignacionManager | crear(), actualizar(), eliminar(), validar_solapamiento() | RF-10 |
-| CL10 — NotificacionManager | enviar(), marcar_leida(), eliminar(), listar() | RF-14 |
-| CL11 — SoporteManager | reportar(), actualizar_estado(), listar_reportes() | RF-15, RF-16 |
+| CL1 — UsuarioService | login(), logout(), cambiarPassword() | RF-01 |
+| CL2 — RolService | verificarRol(), asignarRol(), obtenerPermisos() | RF-02 |
+| CL3 — EstudianteService | registrar(), actualizar(), obtenerHorario(), buscarAula() | RF-03, RF-04, RF-05 |
+| CL4 — DocenteService | registrar(), actualizar(), obtenerHorario(), obtenerAulas() | RF-06, RF-07 |
+| CL5 — AdministradorService | gestionarUsuarios(), gestionarAulas(), gestionarAsignaciones() | RF-08, RF-09, RF-10 |
+| CL6 — AulaService | crear(), actualizar(), eliminar(), cambiarEstado(), buscar() | RF-08, RF-11 |
+| CL7 — MapaService | mostrarMapa(), calcularRuta(), obtenerUbicacion() | RF-11, RF-12 |
+| CL8 — ConsultaService | registrarConsulta(), obtenerHistorial(), filtrar() | RF-05, RF-13 |
+| CL9 — AsignacionService | crear(), actualizar(), eliminar(), validarSolapamiento() | RF-10 |
+| CL10 — NotificacionService | enviar(), marcarLeida(), eliminar(), listar() | RF-14 |
+| CL11 — SoporteService | reportar(), actualizarEstado(), listarReportes() | RF-15, RF-16 |
 
 ---
 
 ## Detalle por Clase
 
-### CL1 — UsuarioManager
+### CL1 — UsuarioService
 | Método | Descripción | RF | RN |
 |---|---|---|---|
-| `login(correo, password)` | Autentica al usuario verificando credenciales | RF-01 | RN-15 |
-| `logout(request)` | Cierra la sesión del usuario | RF-01 | — |
-| `cambiar_password(usuario, nueva)` | Actualiza la contraseña cifrada | RF-01 | RN-15 |
+| `login(correo, password)` | Autentica al usuario verificando credenciales (bcrypt) | RF-01 | RN-15 |
+| `logout(req)` | Invalida el JWT del usuario | RF-01 | — |
+| `cambiarPassword(usuario, nueva)` | Actualiza la contraseña (rehash automático en hook) | RF-01 | RN-15 |
 
-**Implementación Django:**
-```python
-class UsuarioManager:
-    def login(self, correo, password):
-        usuario = authenticate(username=correo, password=password)
-        if usuario:
-            login(request, usuario)
-            return True
-        return False
+**Implementación (Sequelize + JWT):**
+```js
+const jwt = require('jsonwebtoken');
+const { Usuario } = require('../models');
 
-    def logout(self, request):
-        logout(request)
+class UsuarioService {
+  async login(correo, password) {
+    const usuario = await Usuario.findOne({ where: { correo, activo: true } });
+    if (!usuario) return null;
+    const ok = await usuario.verificarContrasena(password);
+    if (!ok) return null;
+    return jwt.sign({ id: usuario.id_usuario, id_rol: usuario.id_rol }, process.env.JWT_SECRET);
+  }
 
-    def cambiar_password(self, usuario, nueva_password):
-        usuario.set_password(nueva_password)
-        usuario.save()
+  async cambiarPassword(usuario, nueva) {
+    usuario.contrasena = nueva; // el hook beforeUpdate re-hashea con bcryptjs
+    await usuario.save();
+  }
+}
+```
 
+---
 
-### CL2 — RolManager
+### CL2 — RolService
 | Método | Descripción | RF | RN |
 |---|---|---|---|
-| `verificar_rol(usuario, rol)` | Verifica si el usuario tiene el rol indicado | RF-02 | RN-01 |
-| `asignar_rol(usuario, rol)` | Asigna un rol a un usuario | RF-02 | RN-01 |
-| `obtener_permisos(rol)` | Retorna los permisos del rol | RF-02 | RN-01 |
+| `verificarRol(usuario, rol)` | Verifica si el usuario tiene el rol indicado | RF-02 | RN-01 |
+| `asignarRol(usuario, rol)` | Asigna un rol a un usuario | RF-02 | RN-01 |
+| `obtenerPermisos(rol)` | Retorna los permisos del rol | RF-02 | RN-01 |
 
-**Implementación Django:**
-```python
-class RolManager:
-    def verificar_rol(self, usuario, rol_nombre):
-        return usuario.id_rol.nombre_rol == rol_nombre
+**Implementación:**
+```js
+const PERMISOS = {
+  Estudiante:    ['ver_mapa', 'buscar_aula', 'ver_horario'],
+  Docente:       ['ver_horario', 'ver_aulas'],
+  Administrador: ['gestionar_todo'],
+};
 
-    def asignar_rol(self, usuario, rol):
-        usuario.id_rol = rol
-        usuario.save()
+class RolService {
+  async verificarRol(usuario, nombreRol) {
+    const rol = await usuario.getRol();
+    return rol?.nombre_rol === nombreRol;
+  }
+  async asignarRol(usuario, rol) {
+    usuario.id_rol = rol.id_rol;
+    await usuario.save();
+  }
+  obtenerPermisos(rol) {
+    return PERMISOS[rol.nombre_rol] ?? [];
+  }
+}
+```
 
-    def obtener_permisos(self, rol):
-        permisos = {
-            'Estudiante': ['ver_mapa', 'buscar_aula', 'ver_horario'],
-            'Docente': ['ver_horario', 'ver_aulas'],
-            'Administrador': ['gestionar_todo']
-        }
-        return permisos.get(rol.nombre_rol, [])        
+---
 
-CL3 — EstudianteManager
-Método	Descripción	RF	RN
-registrar(datos)	Crea un nuevo perfil de estudiante	RF-09	RN-02
-actualizar(estudiante, datos)	Actualiza datos del estudiante	RF-09	RN-02
-obtener_horario(estudiante)	Retorna el horario del estudiante	RF-04	RN-02
-buscar_aula(codigo)	Busca un aula por código	RF-03	RN-08
-obtener_historial(estudiante)	Retorna el historial de consultas	RF-05	RN-09
-Implementación Django:
+### CL3 — EstudianteService
+| Método | Descripción | RF | RN |
+|---|---|---|---|
+| `registrar(datos)` | Crea un nuevo perfil de estudiante | RF-09 | RN-02 |
+| `actualizar(estudiante, datos)` | Actualiza datos del estudiante | RF-09 | RN-02 |
+| `obtenerHorario(estudiante)` | Retorna el horario del estudiante | RF-04 | RN-02 |
+| `buscarAula(codigo)` | Busca un aula por código | RF-03 | RN-08 |
+| `obtenerHistorial(estudiante)` | Retorna el historial de consultas | RF-05 | RN-09 |
 
-python
-Copy
-class EstudianteManager:
-    def obtener_horario(self, estudiante):
-        return Asignacion.objects.filter(
-            id_materia__id_carrera=estudiante.id_carrera
-        ).select_related('id_materia', 'id_aula', 'id_horario')
+**Implementación (Sequelize):**
+```js
+const { Op } = require('sequelize');
+const { Asignacion, Materia, Aula, Horario, Consulta } = require('../models');
 
-    def buscar_aula(self, codigo):
-        return Aula.objects.filter(
-            codigo_aula=codigo,
-            estado__in=['DISPONIBLE', 'OCUPADA']
-        ).first()
+class EstudianteService {
+  async obtenerHorario(estudiante) {
+    return Asignacion.findAll({
+      include: [
+        { model: Materia, where: { id_carrera: estudiante.id_carrera } },
+        { model: Aula },
+        { model: Horario },
+      ],
+    });
+  }
 
-    def obtener_historial(self, estudiante):
-        return Consulta.objects.filter(
-            id_estudiante=estudiante
-        ).order_by('-fecha_consulta')
-CL4 — DocenteManager
-Método	Descripción	RF	RN
-registrar(datos)	Crea un nuevo perfil de docente	RF-09	—
-actualizar(docente, datos)	Actualiza datos del docente	RF-09	—
-obtener_horario(docente)	Retorna el horario del docente	RF-06	RN-12
-obtener_aulas(docente)	Retorna las aulas asignadas al docente	RF-07	RN-12
-Implementación Django:
+  async buscarAula(codigo) {
+    return Aula.findOne({
+      where: { codigo_aula: codigo, estado: { [Op.in]: ['DISPONIBLE', 'OCUPADA'] } },
+    });
+  }
 
-python
-Copy
-class DocenteManager:
-    def obtener_horario(self, docente):
-        return Asignacion.objects.filter(
-            id_docente=docente
-        ).select_related('id_materia', 'id_aula', 'id_horario')
+  async obtenerHistorial(estudiante) {
+    return Consulta.findAll({
+      where: { id_estudiante: estudiante.id_estudiante },
+      order: [['fecha_consulta', 'DESC']],
+    });
+  }
+}
+```
 
-    def obtener_aulas(self, docente):
-        return Aula.objects.filter(
-            asignacion__id_docente=docente
-        ).distinct()
-CL5 — AdministradorManager
-Método	Descripción	RF	RN
-gestionar_usuarios(accion, datos)	CRUD completo de usuarios	RF-09	RN-13
-gestionar_aulas(accion, datos)	CRUD completo de aulas	RF-08	RN-13
-gestionar_asignaciones(accion, datos)	CRUD completo de asignaciones	RF-10	RN-13
-Implementación Django:
+---
 
-python
-Copy
-class AdministradorManager:
-    def gestionar_usuarios(self, accion, datos):
-        if accion == 'crear':
-            return Usuarios.objects.create(**datos)
-        elif accion == 'actualizar':
-            return Usuarios.objects.filter(
-                id_usuario=datos['id']
-            ).update(**datos)
-        elif accion == 'eliminar':
-            return Usuarios.objects.filter(
-                id_usuario=datos['id']
-            ).delete()
+### CL4 — DocenteService
+| Método | Descripción | RF | RN |
+|---|---|---|---|
+| `registrar(datos)` | Crea un nuevo perfil de docente | RF-09 | — |
+| `actualizar(docente, datos)` | Actualiza datos del docente | RF-09 | — |
+| `obtenerHorario(docente)` | Retorna el horario del docente | RF-06 | RN-12 |
+| `obtenerAulas(docente)` | Retorna las aulas asignadas al docente | RF-07 | RN-12 |
 
-    def gestionar_aulas(self, accion, datos):
-        if accion == 'crear':
-            return Aula.objects.create(**datos)
-        elif accion == 'actualizar':
-            return Aula.objects.filter(
-                id_aula=datos['id']
-            ).update(**datos)
-        elif accion == 'eliminar':
-            return Aula.objects.filter(
-                id_aula=datos['id']
-            ).delete()
-CL6 — AulaManager
-Método	Descripción	RF	RN
-crear(datos)	Crea un nuevo aula	RF-08	RN-05
-actualizar(aula, datos)	Actualiza datos del aula	RF-08	RN-05
-eliminar(aula)	Elimina un aula	RF-08	—
-cambiar_estado(aula, estado)	Cambia el estado del aula	RF-08	RN-07
-buscar(filtros)	Busca aulas por filtros	RF-03	RN-08
-Implementación Django:
+**Implementación:**
+```js
+const { Asignacion, Aula, Materia, Horario } = require('../models');
 
-python
-Copy
-class AulaManager:
-    def buscar(self, filtros):
-        qs = Aula.objects.all()
-        if filtros.get('tipo'):
-            qs = qs.filter(tipo=filtros['tipo'])
-        if filtros.get('capacidad'):
-            qs = qs.filter(capacidad__gte=filtros['capacidad'])
-        if filtros.get('estado'):
-            qs = qs.filter(estado=filtros['estado'])
-        return qs
+class DocenteService {
+  async obtenerHorario(docente) {
+    return Asignacion.findAll({
+      where: { id_docente: docente.id_docente },
+      include: [{ model: Materia }, { model: Aula }, { model: Horario }],
+    });
+  }
 
-    def cambiar_estado(self, aula, nuevo_estado):
-        aula.estado = nuevo_estado
-        aula.save()
-CL7 — MapaManager
-Método	Descripción	RF	RN
-mostrar_mapa()	Renderiza el mapa interactivo	RF-11	—
-calcular_ruta(origen, destino)	Calcula la ruta entre dos puntos	RF-12	RN-14
-obtener_ubicacion(aula)	Retorna las coordenadas del aula	RF-11	RN-14
-Implementación Django:
+  async obtenerAulas(docente) {
+    return Aula.findAll({
+      include: [{ model: Asignacion, where: { id_docente: docente.id_docente }, required: true }],
+    });
+  }
+}
+```
 
-python
-Copy
-class MapaManager:
-    def obtener_ubicacion(self, aula):
-        return Ubicacion.objects.filter(id_aula=aula).first()
+---
 
-    def calcular_ruta(self, origen_id, destino_id):
-        origen = Ubicacion.objects.get(id_aula=origen_id)
-        destino = Ubicacion.objects.get(id_aula=destino_id)
-        return {
-            'origen': {'lat': origen.latitud, 'lng': origen.longitud},
-            'destino': {'lat': destino.latitud, 'lng': destino.longitud}
-        }
-CL8 — ConsultaManager
-Método	Descripción	RF	RN
-registrar_consulta(estudiante, aula)	Registra automáticamente una consulta	RF-13	RN-09
-obtener_historial(estudiante)	Retorna el historial del estudiante	RF-05	RN-09
-filtrar(estudiante, fecha)	Filtra el historial por fecha	RF-05	—
-Implementación Django:
+### CL5 — AdministradorService
+| Método | Descripción | RF | RN |
+|---|---|---|---|
+| `gestionarUsuarios(accion, datos)` | CRUD completo de usuarios | RF-09 | RN-13 |
+| `gestionarAulas(accion, datos)` | CRUD completo de aulas | RF-08 | RN-13 |
+| `gestionarAsignaciones(accion, datos)` | CRUD completo de asignaciones | RF-10 | RN-13 |
 
-python
-Copy
-class ConsultaManager:
-    def registrar_consulta(self, estudiante, aula, resultado='EXITOSA'):
-        return Consulta.objects.create(
-            id_estudiante=estudiante,
-            id_aula=aula,
-            resultado=resultado
-        )
+**Implementación:**
+```js
+const { Usuario, Aula } = require('../models');
 
-    def obtener_historial(self, estudiante):
-        return Consulta.objects.filter(
-            id_estudiante=estudiante
-        ).order_by('-fecha_consulta')
+class AdministradorService {
+  async gestionarUsuarios(accion, datos) {
+    if (accion === 'crear')      return Usuario.create(datos);
+    if (accion === 'actualizar') return Usuario.update(datos, { where: { id_usuario: datos.id } });
+    if (accion === 'eliminar')   return Usuario.destroy({ where: { id_usuario: datos.id } });
+  }
 
-    def filtrar(self, estudiante, fecha):
-        return Consulta.objects.filter(
-            id_estudiante=estudiante,
-            fecha_consulta__date=fecha
-        )
-CL9 — AsignacionManager
-Método	Descripción	RF	RN
-crear(datos)	Crea una nueva asignación	RF-10	RN-06
-actualizar(asignacion, datos)	Actualiza una asignación	RF-10	RN-06
-eliminar(asignacion)	Elimina una asignación	RF-10	—
-validar_solapamiento(aula, horario, periodo)	Verifica que no haya solapamiento	RF-10	RN-07
-Implementación Django:
+  async gestionarAulas(accion, datos) {
+    if (accion === 'crear')      return Aula.create(datos);
+    if (accion === 'actualizar') return Aula.update(datos, { where: { id_aula: datos.id } });
+    if (accion === 'eliminar')   return Aula.destroy({ where: { id_aula: datos.id } });
+  }
+}
+```
 
-python
-Copy
-class AsignacionManager:
-    def validar_solapamiento(self, aula, horario, periodo, excluir_id=None):
-        qs = Asignacion.objects.filter(
-            id_aula=aula,
-            id_horario=horario,
-            periodo=periodo
-        )
-        if excluir_id:
-            qs = qs.exclude(id_asignacion=excluir_id)
-        return qs.exists()
+---
 
-    def crear(self, datos):
-        if self.validar_solapamiento(
-            datos['id_aula'], datos['id_horario'], datos['periodo']
-        ):
-            raise ValueError("Solapamiento detectado en aula y horario.")
-        return Asignacion.objects.create(**datos)
-CL10 — NotificacionManager
-Método	Descripción	RF	RN
-enviar(usuario, titulo, mensaje)	Envía una notificación	RF-14	RN-10
-marcar_leida(notificacion)	Marca la notificación como leída	RF-14	—
-eliminar(notificacion)	Elimina una notificación	RF-14	—
-listar(usuario)	Lista las notificaciones del usuario	RF-14	—
-Implementación Django:
+### CL6 — AulaService
+| Método | Descripción | RF | RN |
+|---|---|---|---|
+| `crear(datos)` | Crea un nuevo aula | RF-08 | RN-05 |
+| `actualizar(aula, datos)` | Actualiza datos del aula | RF-08 | RN-05 |
+| `eliminar(aula)` | Elimina un aula | RF-08 | — |
+| `cambiarEstado(aula, estado)` | Cambia el estado del aula | RF-08 | RN-07 |
+| `buscar(filtros)` | Busca aulas por filtros | RF-03 | RN-08 |
 
-python
-Copy
-class NotificacionManager:
-    def enviar(self, usuario, titulo, mensaje):
-        return Notificacion.objects.create(
-            id_usuario=usuario,
-            titulo=titulo,
-            mensaje=mensaje,
-            estado='ENVIADA'
-        )
+**Implementación:**
+```js
+const { Op } = require('sequelize');
+const { Aula } = require('../models');
 
-    def marcar_leida(self, notificacion):
-        notificacion.estado = 'LEIDA'
-        notificacion.save()
+class AulaService {
+  async buscar(filtros) {
+    const where = {};
+    if (filtros.tipo)      where.tipo_aula = filtros.tipo;
+    if (filtros.capacidad) where.capacidad = { [Op.gte]: filtros.capacidad };
+    if (filtros.estado)    where.estado    = filtros.estado;
+    return Aula.findAll({ where });
+  }
 
-    def listar(self, usuario):
-        return Notificacion.objects.filter(
-            id_usuario=usuario
-        ).exclude(estado='ELIMINADA').order_by('-fecha_envio')
-CL11 — SoporteManager
-Método	Descripción	RF	RN
-reportar(estudiante, aula, descripcion)	Crea un reporte de soporte	RF-15	RN-11
-actualizar_estado(reporte, estado)	Actualiza el estado del reporte	RF-16	RN-11
-listar_reportes(filtros)	Lista reportes con filtros	RF-16	RN-11
-Implementación Django:
+  async cambiarEstado(aula, nuevoEstado) {
+    aula.estado = nuevoEstado;
+    await aula.save();
+  }
+}
+```
 
-python
-Copy
-class SoporteManager:
-    def reportar(self, estudiante, aula, descripcion):
-        return ReporteSoporte.objects.create(
-            id_estudiante=estudiante,
-            id_aula=aula,
-            descripcion=descripcion,
-            estado='PENDIENTE'
-        )
+---
 
-    def actualizar_estado(self, reporte, nuevo_estado):
-        reporte.estado = nuevo_estado
-        reporte.save()
+### CL7 — MapaService
+| Método | Descripción | RF | RN |
+|---|---|---|---|
+| `mostrarMapa()` | Devuelve metadatos del mapa (torres/pisos/aulas) | RF-11 | — |
+| `calcularRuta(origen, destino)` | Calcula la ruta entre dos puntos | RF-12 | RN-14 |
+| `obtenerUbicacion(aula)` | Retorna las coordenadas del aula | RF-11 | RN-14 |
 
-    def listar_reportes(self, filtros=None):
-        qs = ReporteSoporte.objects.all()
-        if filtros and filtros.get('estado'):
-            qs = qs.filter(estado=filtros['estado'])
-        return qs.order_by('-fecha_reporte')
+**Implementación:**
+```js
+const { Ubicacion, Ruta } = require('../models');
+
+class MapaService {
+  async obtenerUbicacion(idAula) {
+    return Ubicacion.findOne({ where: { id_aula: idAula } });
+  }
+
+  async calcularRuta(idEstudiante, idOrigen, idDestino) {
+    const origen  = await Ubicacion.findOne({ where: { id_aula: idOrigen } });
+    const destino = await Ubicacion.findOne({ where: { id_aula: idDestino } });
+    const dx = destino.coordenada_x - origen.coordenada_x;
+    const dy = destino.coordenada_y - origen.coordenada_y;
+    const distancia = Math.sqrt(dx * dx + dy * dy);
+
+    return Ruta.create({
+      distancia_metros: distancia,
+      tiempo_minutos:   Math.ceil(distancia / 80),
+      id_estudiante:    idEstudiante,
+      id_aula_origen:   idOrigen,
+      id_aula_destino:  idDestino,
+    });
+  }
+}
+```
+
+---
+
+### CL8 — ConsultaService
+| Método | Descripción | RF | RN |
+|---|---|---|---|
+| `registrarConsulta(estudiante, aula)` | Registra automáticamente una consulta | RF-13 | RN-09 |
+| `obtenerHistorial(estudiante)` | Retorna el historial del estudiante | RF-05 | RN-09 |
+| `filtrar(estudiante, fecha)` | Filtra el historial por fecha | RF-05 | — |
+
+**Implementación:**
+```js
+const { Op } = require('sequelize');
+const { Consulta, Historial } = require('../models');
+
+class ConsultaService {
+  async registrarConsulta(idEstudiante, idAula, tipo = 'BUSQUEDA_AULA') {
+    const consulta = await Consulta.create({
+      id_estudiante: idEstudiante, id_aula: idAula, tipo_consulta: tipo,
+    });
+    await Historial.create({ id_estudiante: idEstudiante, id_consulta: consulta.id_consulta });
+    return consulta;
+  }
+
+  async obtenerHistorial(idEstudiante) {
+    return Consulta.findAll({
+      where: { id_estudiante: idEstudiante },
+      order: [['fecha_consulta', 'DESC']],
+    });
+  }
+
+  async filtrar(idEstudiante, fecha) {
+    const inicio = new Date(`${fecha}T00:00:00`);
+    const fin    = new Date(`${fecha}T23:59:59`);
+    return Consulta.findAll({
+      where: { id_estudiante: idEstudiante, fecha_consulta: { [Op.between]: [inicio, fin] } },
+    });
+  }
+}
+```
+
+---
+
+### CL9 — AsignacionService
+| Método | Descripción | RF | RN |
+|---|---|---|---|
+| `crear(datos)` | Crea una nueva asignación | RF-10 | RN-06 |
+| `actualizar(asignacion, datos)` | Actualiza una asignación | RF-10 | RN-06 |
+| `eliminar(asignacion)` | Elimina una asignación | RF-10 | — |
+| `validarSolapamiento(aula, horario, periodo)` | Verifica que no haya solapamiento | RF-10 | RN-07 |
+
+**Implementación:**
+```js
+const { Op } = require('sequelize');
+const { Asignacion } = require('../models');
+
+class AsignacionService {
+  async validarSolapamiento(idAula, idHorario, periodo, excluirId = null) {
+    const where = { id_aula: idAula, id_horario: idHorario, periodo };
+    if (excluirId) where.id_asignacion = { [Op.ne]: excluirId };
+    return (await Asignacion.count({ where })) > 0;
+  }
+
+  async crear(datos) {
+    if (await this.validarSolapamiento(datos.id_aula, datos.id_horario, datos.periodo)) {
+      throw new Error('Solapamiento detectado en aula y horario.');
+    }
+    return Asignacion.create(datos);
+  }
+}
+```
+
+---
+
+### CL10 — NotificacionService
+| Método | Descripción | RF | RN |
+|---|---|---|---|
+| `enviar(usuario, titulo, mensaje)` | Envía una notificación | RF-14 | RN-10 |
+| `marcarLeida(notificacion)` | Marca la notificación como leída | RF-14 | — |
+| `eliminar(notificacion)` | Marca como ELIMINADA (soft delete) | RF-14 | — |
+| `listar(usuario)` | Lista las notificaciones del usuario | RF-14 | — |
+
+**Implementación:**
+```js
+const { Op } = require('sequelize');
+const { Notificacion } = require('../models');
+
+class NotificacionService {
+  enviar(idUsuario, titulo, mensaje) {
+    return Notificacion.create({ id_usuario: idUsuario, titulo, mensaje, estado: 'ENVIADA' });
+  }
+
+  async marcarLeida(notificacion) {
+    notificacion.estado = 'LEIDA';
+    await notificacion.save();
+  }
+
+  listar(idUsuario) {
+    return Notificacion.findAll({
+      where: { id_usuario: idUsuario, estado: { [Op.ne]: 'ELIMINADA' } },
+      order: [['fecha_envio', 'DESC']],
+    });
+  }
+}
+```
+
+---
+
+### CL11 — SoporteService
+| Método | Descripción | RF | RN |
+|---|---|---|---|
+| `reportar(estudiante, tipoFallo, descripcion)` | Crea un reporte de soporte | RF-15 | RN-11 |
+| `actualizarEstado(reporte, estado)` | Actualiza el estado del reporte | RF-16 | RN-11 |
+| `listarReportes(filtros)` | Lista reportes con filtros | RF-16 | RN-11 |
+
+**Implementación:**
+```js
+const { ReporteSoporte } = require('../models');
+
+class SoporteService {
+  reportar(idEstudiante, tipoFallo, descripcion) {
+    return ReporteSoporte.create({
+      id_estudiante: idEstudiante,
+      tipo_fallo:    tipoFallo,
+      descripcion,
+      estado:        'Abierto',
+    });
+  }
+
+  async actualizarEstado(reporte, nuevoEstado) {
+    reporte.estado = nuevoEstado;
+    if (nuevoEstado === 'Resuelto') reporte.fecha_resolucion = new Date();
+    await reporte.save();
+  }
+
+  listarReportes(filtros = {}) {
+    const where = {};
+    if (filtros.estado) where.estado = filtros.estado;
+    return ReporteSoporte.findAll({ where, order: [['fecha_reporte', 'DESC']] });
+  }
+}
+```

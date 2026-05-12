@@ -13,19 +13,20 @@ entre ellos.
 ### 📱 Nodo 1 — Dispositivo del Usuario (Cliente)
 **Tipo:** Nodo físico (PC, smartphone, tablet)  
 **Sistema Operativo:** Windows / macOS / iOS / Android  
+**Runtime:** Navegador moderno + SPA React (Vite build estático)  
 **Artefactos desplegados:**
 - Navegador Web (Chrome, Firefox, Edge, Safari)
-- Interfaz renderizada del SIGAU (HTML5 + CSS3 + JavaScript)
-- Token de sesión almacenado en localStorage/sessionStorage
+- Bundle React de SIGAU (HTML5 + CSS3 + JS ES2022, servido como estáticos)
+- Token JWT de sesión almacenado en localStorage/sessionStorage
 
-**Protocolos de salida:** HTTPS (TLS 1.3)
+**Protocolos de salida:** HTTPS (TLS 1.3) → API REST del backend
 
 ---
 
 ### 🌐 Nodo 2 — Servidor Web / Aplicación (Backend)
 **Tipo:** Nodo lógico (servidor en la nube o on-premise)  
 **Sistema Operativo:** Ubuntu Server 22.04 LTS  
-**Runtime:** Python 3.11 + Django 4.x  
+**Runtime:** Node.js 18 LTS + Express 4 + Sequelize 6  
 **Artefactos desplegados:**
 - `Auth.Controller` — Módulo de autenticación y gestión de sesiones
 - `Mapa.Controller` — Módulo de mapa interactivo
@@ -35,7 +36,7 @@ entre ellos.
 - `Asistente.Controller` — Módulo del asistente virtual
 - `Soporte.Controller` — Módulo de soporte técnico
 - `Admin.Controller` — Panel de administración
-- `*.Repository` — Capa de acceso a datos (ORM Django)
+- `*.Repository` — Capa de acceso a datos (modelos Sequelize)
 
 **Protocolos de entrada:** HTTPS (TLS 1.3)  
 **Protocolos de salida:** TCP/IP → Base de Datos
@@ -47,8 +48,8 @@ entre ellos.
 **Sistema Operativo:** Ubuntu Server 22.04 LTS  
 **Motor:** PostgreSQL 15  
 **Artefactos desplegados:**
-- Esquema relacional SIGAU (17 tablas normalizadas en 3FN)
-- Scripts DDL de creación y migración
+- Esquema relacional SIGAU (18 tablas normalizadas en 3FN)
+- Scripts DDL de creación y migración (`E11-script-DDL.sql`)
 - Índices de optimización sobre PK y FK
 
 **Protocolos de entrada:** TCP/IP (puerto 5432) desde Servidor Web  
@@ -82,11 +83,11 @@ entre ellos.
 @startuml
 node "Dispositivo del Usuario" as Cliente {
   component "Navegador Web" as Browser
-  component "Interfaz SIGAU\n(HTML5/CSS3/JS)" as UI
+  component "SPA React\n(Vite build)" as UI
   Browser --> UI
 }
 
-node "Servidor Web / Aplicación\n(Django + Python)" as Servidor {
+node "Servidor Web / Aplicación\n(Node.js + Express + Sequelize)" as Servidor {
   component "Auth.Controller" as Auth
   component "Mapa.Controller" as Mapa
   component "Ruta.Controller" as Ruta
@@ -99,7 +100,7 @@ node "Servidor Web / Aplicación\n(Django + Python)" as Servidor {
 }
 
 node "Servidor de Base de Datos\n(PostgreSQL 15)" as BaseDatos {
-  database "SIGAU DB\n(17 tablas - 3FN)" as DB
+  database "SIGAU DB\n(18 tablas - 3FN)" as DB
 }
 
 node "Servicio de IA\n(API Externa)" as IA {

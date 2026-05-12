@@ -19,8 +19,8 @@ de calidad del sistema.
 | # | Nodo | Tipo | Descripción |
 |---|---|---|---|
 | N1 | Navegador Web | Cliente | Browser del usuario (Chrome, Firefox, Safari) |
-| N2 | Servidor Web | Servidor | Servidor Django con Gunicorn |
-| N3 | Servidor de Base de Datos | Servidor | MySQL / PostgreSQL |
+| N2 | Servidor Web | Servidor | Node.js 18 LTS + Express 4 + Sequelize 6 (proceso gestionado con PM2) |
+| N3 | Servidor de Base de Datos | Servidor | PostgreSQL 15 |
 | N4 | Servidor de Archivos Estáticos | Servidor | Nginx para CSS, JS, imágenes |
 | N5 | Servidor de Mapas | Servicio externo | OpenStreetMap / Leaflet.js tiles |
 | N6 | Dispositivo Móvil | Cliente | Smartphone con navegador móvil |
@@ -51,7 +51,7 @@ de calidad del sistema.
 | RNF-05 | Disponibilidad | El sistema debe estar disponible el 99% del tiempo |
 | RNF-06 | Escalabilidad | El sistema debe soportar al menos 500 usuarios concurrentes |
 | RNF-07 | Usabilidad | La interfaz debe ser responsive y funcionar en dispositivos móviles |
-| RNF-08 | Mantenibilidad | El código debe seguir el patrón MTV de Django |
+| RNF-08 | Mantenibilidad | El código debe seguir una arquitectura por capas (modelos Sequelize / routers Express / componentes React) con separación clara de responsabilidades |
 | RNF-09 | Portabilidad | El sistema debe funcionar en Chrome, Firefox y Safari |
 | RNF-10 | Integridad | La base de datos debe mantener integridad referencial con FK |
 
@@ -78,20 +78,20 @@ de calidad del sistema.
 | Tecnología | Chrome, Firefox, Safari |
 | Protocolos | HTTPS, WebSocket |
 | RNF | RNF-02 Seguridad, RNF-03 Rendimiento, RNF-07 Responsive, RNF-09 Portabilidad |
-| Componentes servidos | Templates Django, Bootstrap 5, Leaflet.js |
+| Componentes servidos | SPA React (Vite build), TailwindCSS/Bootstrap 5, react-leaflet |
 
 ### N2 — Servidor Web
 | Elemento | Detalle |
 |---|---|
-| Tecnología | Django 4.x + Gunicorn |
+| Tecnología | Node.js 18 LTS + Express 4 + Sequelize 6 (gestor de procesos: PM2 / systemd) |
 | Protocolos | HTTPS, HTTP, TCP/IP, REST, WebSocket |
 | RNF | RNF-01, RNF-02, RNF-03, RNF-05, RNF-06, RNF-08 |
-| Responsabilidad | Lógica de negocio, vistas, autenticación, APIs |
+| Responsabilidad | Lógica de negocio, routers REST, autenticación JWT, APIs |
 
 ### N3 — Servidor de Base de Datos
 | Elemento | Detalle |
 |---|---|
-| Tecnología | MySQL 8.x o PostgreSQL 15.x |
+| Tecnología | PostgreSQL 15 |
 | Protocolos | TCP/IP, SQL |
 | RNF | RNF-03 Rendimiento, RNF-05 Disponibilidad, RNF-06 Escalabilidad, RNF-10 Integridad |
 | Responsabilidad | Persistencia de datos, integridad referencial |

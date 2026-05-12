@@ -38,19 +38,24 @@ restricciones de integridad están implementadas.
 
 ## Script DDL Completo
 
+> **Nota:** la versión completa y vigente del DDL vive en
+> [`../diseño/fase2-datos/E11-script-DDL.sql`](../diseño/fase2-datos/E11-script-DDL.sql)
+> y está escrita para **PostgreSQL 15**. El bloque siguiente es un resumen
+> ilustrativo (sintaxis PostgreSQL) que reproduce las tablas principales.
+
 ```sql
 -- ============================================================
 -- SIGAU — Script DDL Completo
 -- Sistema de Información y Gestión Académica Universitaria
 -- Módulo: Mapa Interactivo y Navegación de Aulas
--- Base de datos: MySQL 8.x / PostgreSQL 15.x
+-- Base de datos: PostgreSQL 15.x
 -- ============================================================
 
 -- ------------------------------------------------------------
 -- 1. ROL
 -- ------------------------------------------------------------
 CREATE TABLE ROL (
-    id_rol      INT PRIMARY KEY AUTO_INCREMENT,
+    id_rol      SERIAL PRIMARY KEY,
     nombre_rol  VARCHAR(50) NOT NULL
 );
 
@@ -58,7 +63,7 @@ CREATE TABLE ROL (
 -- 2. USUARIOS
 -- ------------------------------------------------------------
 CREATE TABLE USUARIOS (
-    id_usuario  INT PRIMARY KEY AUTO_INCREMENT,
+    id_usuario  SERIAL PRIMARY KEY,
     correo      VARCHAR(100) NOT NULL UNIQUE,
     password    VARCHAR(255) NOT NULL,
     id_rol      INT NOT NULL,
@@ -70,7 +75,7 @@ CREATE TABLE USUARIOS (
 -- 3. CARRERA
 -- ------------------------------------------------------------
 CREATE TABLE CARRERA (
-    id_carrera      INT PRIMARY KEY AUTO_INCREMENT,
+    id_carrera      SERIAL PRIMARY KEY,
     nombre_carrera  VARCHAR(100) NOT NULL,
     facultad        VARCHAR(100) NOT NULL
 );
@@ -79,7 +84,7 @@ CREATE TABLE CARRERA (
 -- 4. ESTUDIANTE
 -- ------------------------------------------------------------
 CREATE TABLE ESTUDIANTE (
-    id_estudiante       INT PRIMARY KEY AUTO_INCREMENT,
+    id_estudiante       SERIAL PRIMARY KEY,
     id_usuario          INT NOT NULL UNIQUE,
     id_carrera          INT NOT NULL,
     nombre              VARCHAR(100) NOT NULL,
@@ -95,7 +100,7 @@ CREATE TABLE ESTUDIANTE (
 -- 5. DOCENTE
 -- ------------------------------------------------------------
 CREATE TABLE DOCENTE (
-    id_docente      INT PRIMARY KEY AUTO_INCREMENT,
+    id_docente      SERIAL PRIMARY KEY,
     id_usuario      INT NOT NULL UNIQUE,
     nombre          VARCHAR(100) NOT NULL,
     correo          VARCHAR(100) NOT NULL UNIQUE,
@@ -108,7 +113,7 @@ CREATE TABLE DOCENTE (
 -- 6. ADMINISTRADOR
 -- ------------------------------------------------------------
 CREATE TABLE ADMINISTRADOR (
-    id_administrador    INT PRIMARY KEY AUTO_INCREMENT,
+    id_administrador    SERIAL PRIMARY KEY,
     id_usuario          INT NOT NULL UNIQUE,
     nombre              VARCHAR(100) NOT NULL,
     CONSTRAINT fk_admin_usuario FOREIGN KEY (id_usuario)
@@ -119,7 +124,7 @@ CREATE TABLE ADMINISTRADOR (
 -- 7. MATERIA
 -- ------------------------------------------------------------
 CREATE TABLE MATERIA (
-    id_materia      INT PRIMARY KEY AUTO_INCREMENT,
+    id_materia      SERIAL PRIMARY KEY,
     id_carrera      INT NOT NULL,
     nombre_materia  VARCHAR(100) NOT NULL,
     creditos        INT NOT NULL,
@@ -132,7 +137,7 @@ CREATE TABLE MATERIA (
 -- 8. HORARIO
 -- ------------------------------------------------------------
 CREATE TABLE HORARIO (
-    id_horario      INT PRIMARY KEY AUTO_INCREMENT,
+    id_horario      SERIAL PRIMARY KEY,
     dia_semana      VARCHAR(20) NOT NULL,
     hora_inicio     TIME NOT NULL,
     hora_fin        TIME NOT NULL
@@ -142,7 +147,7 @@ CREATE TABLE HORARIO (
 -- 9. TORRE
 -- ------------------------------------------------------------
 CREATE TABLE TORRE (
-    id_torre        INT PRIMARY KEY AUTO_INCREMENT,
+    id_torre        SERIAL PRIMARY KEY,
     nombre_torre    VARCHAR(50) NOT NULL,
     descripcion     TEXT
 );
@@ -151,7 +156,7 @@ CREATE TABLE TORRE (
 -- 10. PISO
 -- ------------------------------------------------------------
 CREATE TABLE PISO (
-    id_piso         INT PRIMARY KEY AUTO_INCREMENT,
+    id_piso         SERIAL PRIMARY KEY,
     id_torre        INT NOT NULL,
     numero_piso     INT NOT NULL,
     descripcion     TEXT,
@@ -163,7 +168,7 @@ CREATE TABLE PISO (
 -- 11. AULA
 -- ------------------------------------------------------------
 CREATE TABLE AULA (
-    id_aula         INT PRIMARY KEY AUTO_INCREMENT,
+    id_aula         SERIAL PRIMARY KEY,
     id_piso         INT NOT NULL,
     codigo_aula     VARCHAR(20) NOT NULL UNIQUE,
     capacidad       INT NOT NULL,
@@ -178,7 +183,7 @@ CREATE TABLE AULA (
 -- 12. UBICACION
 -- ------------------------------------------------------------
 CREATE TABLE UBICACION (
-    id_ubicacion    INT PRIMARY KEY AUTO_INCREMENT,
+    id_ubicacion    SERIAL PRIMARY KEY,
     id_aula         INT NOT NULL UNIQUE,
     latitud         DECIMAL(10,8) NOT NULL,
     longitud        DECIMAL(11,8) NOT NULL,
@@ -191,7 +196,7 @@ CREATE TABLE UBICACION (
 -- 13. ASIGNACION
 -- ------------------------------------------------------------
 CREATE TABLE ASIGNACION (
-    id_asignacion   INT PRIMARY KEY AUTO_INCREMENT,
+    id_asignacion   SERIAL PRIMARY KEY,
     id_docente      INT NOT NULL,
     id_materia      INT NOT NULL,
     id_aula         INT NOT NULL,
@@ -212,10 +217,10 @@ CREATE TABLE ASIGNACION (
 -- 14. CONSULTA
 -- ------------------------------------------------------------
 CREATE TABLE CONSULTA (
-    id_consulta     INT PRIMARY KEY AUTO_INCREMENT,
+    id_consulta     SERIAL PRIMARY KEY,
     id_estudiante   INT NOT NULL,
     id_aula         INT NOT NULL,
-    fecha_consulta  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_consulta  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     resultado       VARCHAR(20) NOT NULL
                     CHECK (resultado IN ('EXITOSA','FALLIDA')),
     CONSTRAINT fk_consulta_estudiante FOREIGN KEY (id_estudiante)
@@ -228,11 +233,11 @@ CREATE TABLE CONSULTA (
 -- 15. NOTIFICACION
 -- ------------------------------------------------------------
 CREATE TABLE NOTIFICACION (
-    id_notificacion INT PRIMARY KEY AUTO_INCREMENT,
+    id_notificacion SERIAL PRIMARY KEY,
     id_usuario      INT NOT NULL,
     titulo          VARCHAR(100) NOT NULL,
     mensaje         TEXT NOT NULL,
-    fecha_envio     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_envio     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     estado          VARCHAR(20) NOT NULL
                     CHECK (estado IN ('ENVIADA','LEIDA','ELIMINADA')),
     CONSTRAINT fk_notif_usuario FOREIGN KEY (id_usuario)
@@ -243,11 +248,11 @@ CREATE TABLE NOTIFICACION (
 -- 16. REPORTE_SOPORTE
 -- ------------------------------------------------------------
 CREATE TABLE REPORTE_SOPORTE (
-    id_reporte      INT PRIMARY KEY AUTO_INCREMENT,
+    id_reporte      SERIAL PRIMARY KEY,
     id_estudiante   INT NOT NULL,
     id_aula         INT NOT NULL,
     descripcion     TEXT NOT NULL,
-    fecha_reporte   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_reporte   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     estado          VARCHAR(20) NOT NULL
                     CHECK (estado IN ('PENDIENTE','EN_REVISION','RESUELTO')),
     CONSTRAINT fk_reporte_estudiante FOREIGN KEY (id_estudiante)

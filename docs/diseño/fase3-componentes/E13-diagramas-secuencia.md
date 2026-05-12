@@ -10,7 +10,7 @@
 **Actor:** Estudiante  
 **Objetivo:** El estudiante busca la ubicación de un aula en el mapa interactivo
 
-Estudiante UI (Frontend) Vista (Django) Modelo (BD)
+Estudiante UI (React) Controlador (Express) Modelo (Sequelize / BD)
 | | | |
 |-- buscar aula -->| | |
 | |-- GET /buscar -->| |
@@ -34,7 +34,7 @@ Estudiante UI (Frontend) Vista (Django) Modelo (BD)
 **Actor:** Estudiante  
 **Objetivo:** El estudiante calcula la ruta más corta entre dos aulas
 
-Estudiante UI (Frontend) Vista (Django) Modelo (BD)
+Estudiante UI (React) Controlador (Express) Modelo (Sequelize / BD)
 | | | |
 |-- origen/destino>| | |
 | |-- POST /ruta --->| |
@@ -58,7 +58,7 @@ Estudiante UI (Frontend) Vista (Django) Modelo (BD)
 **Actor:** Estudiante / Administrador  
 **Objetivo:** El usuario inicia sesión en el sistema
 
-Usuario UI (Frontend) Vista (Django) Modelo (BD)
+Usuario UI (React) Controlador (Express) Modelo (Sequelize / BD)
 | | | |
 |-- correo/pass -->| | |
 | |-- POST /login -->| |
@@ -83,7 +83,7 @@ Usuario UI (Frontend) Vista (Django) Modelo (BD)
 **Actor:** Estudiante  
 **Objetivo:** El estudiante consulta sus materias y aulas asignadas
 
-Estudiante UI (Frontend) Vista (Django) Modelo (BD)
+Estudiante UI (React) Controlador (Express) Modelo (Sequelize / BD)
 | | | |
 |-- ver horario -->| | |
 | |-- GET /horario ->| |
@@ -108,7 +108,7 @@ Estudiante UI (Frontend) Vista (Django) Modelo (BD)
 **Actor:** Estudiante  
 **Objetivo:** El estudiante reporta un problema o fallo en el sistema
 
-Estudiante UI (Frontend) Vista (Django) Modelo (BD)
+Estudiante UI (React) Controlador (Express) Modelo (Sequelize / BD)
 | | | |
 |-- llenar form -->| | |
 | |-- POST /reporte->| |
@@ -129,7 +129,7 @@ Estudiante UI (Frontend) Vista (Django) Modelo (BD)
 **Actor:** Administrador  
 **Objetivo:** El administrador registra o actualiza una aula en el sistema
 
-Administrador UI (Frontend) Vista (Django) Modelo (BD)
+Administrador UI (React) Controlador (Express) Modelo (Sequelize / BD)
 | | | |
 |-- form aula ---->| | |
 | |-- POST /aula --->| |

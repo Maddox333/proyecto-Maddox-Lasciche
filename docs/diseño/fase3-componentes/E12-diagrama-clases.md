@@ -9,7 +9,8 @@
 
 El diagrama de clases representa la estructura estática del sistema,
 mostrando las clases, sus atributos, métodos y las relaciones entre ellas.
-Está orientado a la implementación en Django (modelos).
+Está orientado a la implementación con **Sequelize 6 sobre Node.js + Express**
+(modelos en `src/models/*.js`) consumidos por una SPA **React** (Vite).
 
 ---
 
@@ -304,10 +305,14 @@ Está orientado a la implementación en Django (modelos).
 
 ---
 
-## Nota de Implementación en Django
+## Nota de Implementación en Sequelize (Node.js + Express)
 
-> En Django, cada clase corresponde a un **Model** en `models.py`.
-> Las relaciones se implementan con:
-> - `ForeignKey` para relaciones 1:N
-> - `OneToOneField` para relaciones 1:1
-> - `ManyToManyField` para relaciones N:M
+> Cada clase corresponde a un **Model** Sequelize en `src/models/<Clase>.js`.
+> Las relaciones se declaran en `src/models/index.js` con:
+> - `belongsTo` / `hasMany` para relaciones 1:N
+> - `belongsTo` / `hasOne` para relaciones 1:1
+> - `belongsToMany` para relaciones N:M (con tabla intermedia)
+>
+> Cuando una entidad tiene dos FKs hacia la misma tabla (p. ej. `RUTA`
+> referencia `AULA` como origen y destino), se usan **alias** (`as:
+> 'aula_origen'`, `as: 'aula_destino'`) para distinguirlas en las queries.

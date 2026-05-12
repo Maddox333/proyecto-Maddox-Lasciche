@@ -10,7 +10,7 @@
 El prototipo interactivo describe el comportamiento esperado de la interfaz
 de usuario, definiendo las interacciones, transiciones y respuestas del
 sistema ante las acciones del usuario. Sirve como guía para la
-implementación del frontend en Django.
+implementación del frontend en **React (Vite)**.
 
 ---
 
@@ -19,9 +19,11 @@ implementación del frontend en Django.
 | Herramienta | Uso |
 |---|---|
 | Figma | Diseño visual y prototipado interactivo |
-| Django Templates | Implementación final del frontend |
-| Bootstrap 5 | Framework CSS para estilos y componentes |
-| Leaflet.js | Librería para el mapa interactivo del campus |
+| React 18 + Vite | Implementación final del frontend (SPA) |
+| React Router | Navegación entre pantallas y rutas protegidas por rol |
+| TailwindCSS / Bootstrap 5 | Framework CSS para estilos y componentes |
+| Leaflet.js (react-leaflet) | Librería para el mapa interactivo del campus |
+| Axios | Cliente HTTP para consumir el API REST (`/api/...`) |
 
 ---
 

@@ -7,8 +7,9 @@
 
 ## Descripción
 
-Esta matriz relaciona los componentes del sistema (módulos Django)
-con los arquetipos arquitecturales y los Requisitos Funcionales (RF),
+Esta matriz relaciona los componentes del sistema (módulos del backend
+Node.js/Express y de la SPA React) con los arquetipos arquitecturales y
+los Requisitos Funcionales (RF),
 verificando que cada componente tiene una justificación arquitectural
 y un requisito que lo respalda.
 
@@ -18,15 +19,15 @@ y un requisito que lo respalda.
 
 | # | Componente | Tipo | Descripción |
 |---|---|---|---|
-| C1 | autenticacion | App Django | Gestión de login, logout y control de acceso por rol |
-| C2 | usuarios | App Django | Gestión de usuarios, estudiantes, docentes y administradores |
-| C3 | infraestructura | App Django | Gestión de torres, pisos y aulas |
-| C4 | academico | App Django | Gestión de carreras, materias, horarios y asignaciones |
-| C5 | mapa | App Django | Mapa interactivo, ubicaciones y cálculo de rutas |
-| C6 | consultas | App Django | Registro y visualización del historial de consultas |
-| C7 | notificaciones | App Django | Envío y recepción de notificaciones |
-| C8 | soporte | App Django | Reporte y gestión de fallos |
-| C9 | core | App Django | Configuración base, templates y utilidades compartidas |
+| C1 | autenticacion | Módulo backend + React | Login, logout y control de acceso por rol (JWT + middleware Express + rutas protegidas en React Router) |
+| C2 | usuarios | Módulo backend + React | Gestión de usuarios, estudiantes, docentes y administradores |
+| C3 | infraestructura | Módulo backend + React | Gestión de torres, pisos y aulas |
+| C4 | academico | Módulo backend + React | Gestión de carreras, materias, horarios y asignaciones |
+| C5 | mapa | Módulo backend + React | Mapa interactivo (react-leaflet), ubicaciones y cálculo de rutas |
+| C6 | consultas | Módulo backend + React | Registro y visualización del historial de consultas |
+| C7 | notificaciones | Módulo backend + React | Envío y recepción de notificaciones |
+| C8 | soporte | Módulo backend + React | Reporte y gestión de fallos |
+| C9 | core | Módulo backend + React | Configuración base (Express app, layout React, utilidades compartidas) |
 
 ---
 
@@ -53,7 +54,7 @@ y un requisito que lo respalda.
 |---|---|
 | Arquetipos | A1 Actor, A2 Servicio, A5 Controlador, A6 Interfaz |
 | RF | RF-01 Autenticación, RF-02 Control de acceso |
-| Archivos Django | `views.py`, `urls.py`, `forms.py`, `templates/login.html` |
+| Archivos | Backend: `src/routes/auth.js`, middleware JWT en `src/middleware/auth.js`. Frontend React: `frontend/src/pages/Login.jsx`, `frontend/src/hooks/useAuth.js` |
 | Casos de Uso | CU-01 Iniciar Sesión, CU-02 Cerrar Sesión |
 
 ### C2 — usuarios
@@ -61,7 +62,7 @@ y un requisito que lo respalda.
 |---|---|
 | Arquetipos | A1 Actor, A3 Entidad, A4 Repositorio, A5 Controlador, A6 Interfaz |
 | RF | RF-02 Control de acceso, RF-09 Gestionar usuarios |
-| Archivos Django | `models.py`, `views.py`, `urls.py`, `admin.py`, `templates/usuarios/` |
+| Archivos | Backend: `src/models/{Usuario,Estudiante,Docente,Administrador,Rol}.js`, `src/routes/index.js`. Frontend React: `frontend/src/pages/Usuarios.jsx`, `frontend/src/components/UsuarioForm.jsx` |
 | Casos de Uso | CU-09 Gestionar Usuarios |
 
 ### C3 — infraestructura
@@ -69,7 +70,7 @@ y un requisito que lo respalda.
 |---|---|
 | Arquetipos | A3 Entidad, A4 Repositorio, A5 Controlador, A6 Interfaz |
 | RF | RF-08 Gestionar aulas, RF-11 Mapa interactivo |
-| Archivos Django | `models.py`, `views.py`, `urls.py`, `admin.py`, `templates/infraestructura/` |
+| Archivos | Backend: `src/models/{Torre,Piso,Aula,Ubicacion}.js`, endpoints `/api/{torres,pisos,aulas,ubicaciones}`. Frontend React: `frontend/src/pages/GestionAulas.jsx` |
 | Casos de Uso | CU-08 Gestionar Aulas, CU-11 Ver Mapa |
 
 ### C4 — academico
@@ -77,7 +78,7 @@ y un requisito que lo respalda.
 |---|---|
 | Arquetipos | A3 Entidad, A4 Repositorio, A5 Controlador, A6 Interfaz |
 | RF | RF-04 Horario estudiante, RF-06 Horario docente, RF-07 Aulas docente, RF-10 Asignaciones |
-| Archivos Django | `models.py`, `views.py`, `urls.py`, `admin.py`, `templates/academico/` |
+| Archivos | Backend: `src/models/{Carrera,Materia,Horario,Asignacion}.js`. Frontend React: `frontend/src/pages/Horario.jsx`, `frontend/src/pages/Asignaciones.jsx` |
 | Casos de Uso | CU-04, CU-06, CU-07, CU-10 |
 
 ### C5 — mapa
@@ -85,7 +86,7 @@ y un requisito que lo respalda.
 |---|---|
 | Arquetipos | A2 Servicio, A3 Entidad, A4 Repositorio, A5 Controlador, A6 Interfaz |
 | RF | RF-03 Buscar aula, RF-11 Mapa interactivo, RF-12 Calcular ruta |
-| Archivos Django | `models.py`, `views.py`, `urls.py`, `services.py`, `templates/mapa/` |
+| Archivos | Backend: `src/models/Ruta.js`, `src/services/rutaService.js`. Frontend React: `frontend/src/pages/Mapa.jsx`, `frontend/src/components/MapaCampus.jsx` (react-leaflet) |
 | Casos de Uso | CU-03, CU-11, CU-12 |
 
 ### C6 — consultas
@@ -93,7 +94,7 @@ y un requisito que lo respalda.
 |---|---|
 | Arquetipos | A3 Entidad, A4 Repositorio, A5 Controlador, A6 Interfaz |
 | RF | RF-05 Historial consultas, RF-13 Registrar consulta |
-| Archivos Django | `models.py`, `views.py`, `urls.py`, `templates/consultas/` |
+| Archivos | Backend: `src/models/{Consulta,Historial}.js`, endpoints `/api/{consultas,historiales}`. Frontend React: `frontend/src/pages/Historial.jsx` |
 | Casos de Uso | CU-05, CU-13 |
 
 ### C7 — notificaciones
@@ -101,7 +102,7 @@ y un requisito que lo respalda.
 |---|---|
 | Arquetipos | A3 Entidad, A4 Repositorio, A5 Controlador, A6 Interfaz, A7 Notificador |
 | RF | RF-14 Notificaciones |
-| Archivos Django | `models.py`, `views.py`, `urls.py`, `templates/notificaciones/` |
+| Archivos | Backend: `src/models/Notificacion.js`, endpoint `/api/notificaciones`. Frontend React: `frontend/src/components/NotificationCenter.jsx` |
 | Casos de Uso | CU-14, CU-15 |
 
 ### C8 — soporte
@@ -109,7 +110,7 @@ y un requisito que lo respalda.
 |---|---|
 | Arquetipos | A3 Entidad, A4 Repositorio, A5 Controlador, A6 Interfaz, A8 Reportador |
 | RF | RF-15 Reportar fallo, RF-16 Gestionar reportes |
-| Archivos Django | `models.py`, `views.py`, `urls.py`, `templates/soporte/` |
+| Archivos | Backend: `src/models/ReporteSoporte.js`, endpoint `/api/reportes-soporte`. Frontend React: `frontend/src/pages/Reportes.jsx` |
 | Casos de Uso | CU-16, CU-17 |
 
 ### C9 — core
@@ -117,7 +118,7 @@ y un requisito que lo respalda.
 |---|---|
 | Arquetipos | A5 Controlador, A6 Interfaz |
 | RF | RF-01, RF-02 |
-| Archivos Django | `settings.py`, `urls.py`, `templates/base.html`, `static/` |
+| Archivos | Backend: `src/server.js`, `src/config/database.js`, `src/middleware/errorHandler.js`, `src/utils/crudFactory.js`. Frontend React: `frontend/src/App.jsx`, `frontend/src/main.jsx`, `frontend/src/components/Layout.jsx` |
 | Casos de Uso | Todos (base compartida) |
 
 ---

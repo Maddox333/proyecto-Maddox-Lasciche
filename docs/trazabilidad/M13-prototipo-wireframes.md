@@ -95,141 +95,113 @@ navegación entre vistas y las restricciones de acceso.
 
 ---
 
-## Implementación de Control de Acceso en Django
+## Implementación de Control de Acceso
 
-### Decoradores por Vista
+El control de acceso tiene dos capas que se complementan:
 
-```python
-# autenticacion/decorators.py
+1. **Backend (Express):** middleware que valida el JWT y exige roles en cada
+   endpoint protegido (`/api/*`).
+2. **Frontend (React Router):** componente `RequireRole` que envuelve cada
+   ruta privada y redirige a `/login` (anónimo) o a `/acceso-denegado`
+   (rol incorrecto).
 
-from functools import wraps
-from django.shortcuts import redirect
+### Backend — middleware Express
 
-def rol_requerido(*roles):
-    def decorator(view_func):
-        @wraps(view_func)
-        def wrapper(request, *args, **kwargs):
-            if not request.user.is_authenticated:
-                return redirect('login')
-            rol_usuario = request.user.usuarios.id_rol.nombre_rol
-            if rol_usuario not in roles:
-                return redirect('acceso_denegado')
-            return view_func(request, *args, **kwargs)
-        return wrapper
-    return decorator
+```js
+// src/middleware/auth.js
+const jwt = require('jsonwebtoken');
+const { Usuario } = require('../models');
 
+function requireAuth(req, res, next) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  try {
+    req.auth = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch {
+    res.status(401).json({ error: 'No autenticado' });
+  }
+}
 
-# Vistas de Estudiante
-@rol_requerido('Estudiante')
-def dashboard_estudiante(request): ...
+function requireRole(...rolesPermitidos) {
+  return async (req, res, next) => {
+    const usuario = await Usuario.findByPk(req.auth.id, { include: ['rol'] });
+    if (!usuario || !rolesPermitidos.includes(usuario.rol.nombre_rol)) {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+    req.usuario = usuario;
+    next();
+  };
+}
 
-@rol_requerido('Estudiante')
-def buscar_aula(request): ...
+module.exports = { requireAuth, requireRole };
+```
 
-@rol_requerido('Estudiante')
-def detalle_aula(request, id): ...
+```js
+// src/routes/index.js (extracto)
+const { requireAuth, requireRole } = require('../middleware/auth');
 
-@rol_requerido('Estudiante')
-def horario_estudiante(request): ...
+router.use('/usuarios',          requireAuth, requireRole('Administrador'), usuariosRouter);
+router.use('/aulas',             requireAuth, requireRole('Administrador', 'Docente', 'Estudiante'), aulasRouter);
+router.use('/asignaciones',      requireAuth, requireRole('Administrador'), asignacionesRouter);
+router.use('/reportes-soporte',  requireAuth, reportesRouter); // mixto: ver requireRole interno
+```
 
-@rol_requerido('Estudiante')
-def historial_consultas(request): ...
+### Frontend — React Router
 
-@rol_requerido('Estudiante')
-def reportar_fallo(request): ...
+```jsx
+// frontend/src/components/RequireRole.jsx
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
-# Vistas de Docente
-@rol_requerido('Docente')
-def dashboard_docente(request): ...
+export default function RequireRole({ roles, children }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (!roles.includes(user.rol)) return <Navigate to="/acceso-denegado" replace />;
+  return children;
+}
+```
 
-@rol_requerido('Docente')
-def horario_docente(request): ...
+```jsx
+// frontend/src/App.jsx
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import RequireRole from './components/RequireRole';
+// ... imports de páginas ...
 
-@rol_requerido('Docente')
-def aulas_docente(request): ...
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />} />
 
-# Vistas compartidas
-@rol_requerido('Estudiante', 'Docente')
-def mapa_interactivo(request): ...
+        {/* Estudiante */}
+        <Route path="/estudiante/dashboard"   element={<RequireRole roles={['Estudiante']}><DashboardEstudiante /></RequireRole>} />
+        <Route path="/estudiante/buscar-aula" element={<RequireRole roles={['Estudiante']}><BuscarAula /></RequireRole>} />
+        <Route path="/estudiante/aula/:id"    element={<RequireRole roles={['Estudiante']}><DetalleAula /></RequireRole>} />
+        <Route path="/estudiante/horario"     element={<RequireRole roles={['Estudiante']}><HorarioEstudiante /></RequireRole>} />
+        <Route path="/estudiante/historial"   element={<RequireRole roles={['Estudiante']}><Historial /></RequireRole>} />
+        <Route path="/estudiante/reportar"    element={<RequireRole roles={['Estudiante']}><ReportarFallo /></RequireRole>} />
 
-@rol_requerido('Estudiante')
-def ruta_aula(request, id): ...
+        {/* Docente */}
+        <Route path="/docente/dashboard" element={<RequireRole roles={['Docente']}><DashboardDocente /></RequireRole>} />
+        <Route path="/docente/horario"   element={<RequireRole roles={['Docente']}><HorarioDocente /></RequireRole>} />
+        <Route path="/docente/aulas"     element={<RequireRole roles={['Docente']}><AulasDocente /></RequireRole>} />
 
-@rol_requerido('Estudiante', 'Docente', 'Administrador')
-def notificaciones(request): ...
+        {/* Compartidos */}
+        <Route path="/mapa"             element={<RequireRole roles={['Estudiante', 'Docente']}><Mapa /></RequireRole>} />
+        <Route path="/mapa/ruta/:id"    element={<RequireRole roles={['Estudiante']}><Ruta /></RequireRole>} />
+        <Route path="/notificaciones"   element={<RequireRole roles={['Estudiante', 'Docente', 'Administrador']}><Notificaciones /></RequireRole>} />
 
-# Vistas de Administrador
-@rol_requerido('Administrador')
-def dashboard_admin(request): ...
-
-@rol_requerido('Administrador')
-def gestion_aulas(request): ...
-
-@rol_requerido('Administrador')
-def formulario_aula(request): ...
-
-@rol_requerido('Administrador')
-def gestion_usuarios(request): ...
-
-@rol_requerido('Administrador')
-def formulario_usuario(request): ...
-
-@rol_requerido('Administrador')
-def gestion_asignaciones(request): ...
-
-@rol_requerido('Administrador')
-def formulario_asignacion(request): ...
-
-@rol_requerido('Administrador')
-def gestion_reportes(request): ...
-
-# sigau/urls.py
-
-from django.urls import path, include
-
-urlpatterns = [
-    # Autenticación
-    path('login/', views.login_view, name='login'),
-    path('logout/', views.logout_view, name='logout'),
-
-    # Estudiante
-    path('estudiante/', include([
-        path('dashboard/', views.dashboard_estudiante, name='dashboard_estudiante'),
-        path('buscar-aula/', views.buscar_aula, name='buscar_aula'),
-        path('aula/<int:id>/', views.detalle_aula, name='detalle_aula'),
-        path('horario/', views.horario_estudiante, name='horario_estudiante'),
-        path('historial/', views.historial_consultas, name='historial_consultas'),
-        path('reportar/', views.reportar_fallo, name='reportar_fallo'),
-    ])),
-
-    # Docente
-    path('docente/', include([
-        path('dashboard/', views.dashboard_docente, name='dashboard_docente'),
-        path('horario/', views.horario_docente, name='horario_docente'),
-        path('aulas/', views.aulas_docente, name='aulas_docente'),
-    ])),
-
-    # Mapa (compartido)
-    path('mapa/', include([
-        path('', views.mapa_interactivo, name='mapa'),
-        path('ruta/<int:id>/', views.ruta_aula, name='ruta_aula'),
-    ])),
-
-    # Notificaciones (compartido)
-    path('notificaciones/', views.notificaciones, name='notificaciones'),
-
-    # Administrador
-    path('admin/', include([
-        path('dashboard/', views.dashboard_admin, name='dashboard_admin'),
-        path('aulas/', views.gestion_aulas, name='gestion_aulas'),
-        path('aulas/nueva/', views.formulario_aula, name='formulario_aula'),
-        path('aulas/<int:id>/editar/', views.formulario_aula, name='editar_aula'),
-        path('usuarios/', views.gestion_usuarios, name='gestion_usuarios'),
-        path('usuarios/nuevo/', views.formulario_usuario, name='formulario_usuario'),
-        path('usuarios/<int:id>/editar/', views.formulario_usuario, name='editar_usuario'),
-        path('asignaciones/', views.gestion_asignaciones, name='gestion_asignaciones'),
-        path('asignaciones/nueva/', views.formulario_asignacion, name='formulario_asignacion'),
-        path('asignaciones/<int:id>/editar/', views.formulario_asignacion, name='editar_asignacion'),
-        path('reportes/', views.gestion_reportes, name='gestion_reportes'),
-    ])),
-]
+        {/* Administrador */}
+        <Route path="/admin/dashboard"             element={<RequireRole roles={['Administrador']}><DashboardAdmin /></RequireRole>} />
+        <Route path="/admin/aulas"                 element={<RequireRole roles={['Administrador']}><GestionAulas /></RequireRole>} />
+        <Route path="/admin/aulas/nueva"           element={<RequireRole roles={['Administrador']}><FormAula /></RequireRole>} />
+        <Route path="/admin/usuarios"              element={<RequireRole roles={['Administrador']}><GestionUsuarios /></RequireRole>} />
+        <Route path="/admin/usuarios/nuevo"        element={<RequireRole roles={['Administrador']}><FormUsuario /></RequireRole>} />
+        <Route path="/admin/asignaciones"          element={<RequireRole roles={['Administrador']}><GestionAsignaciones /></RequireRole>} />
+        <Route path="/admin/asignaciones/nueva"    element={<RequireRole roles={['Administrador']}><FormAsignacion /></RequireRole>} />
+        <Route path="/admin/reportes"              element={<RequireRole roles={['Administrador']}><GestionReportes /></RequireRole>} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+```
