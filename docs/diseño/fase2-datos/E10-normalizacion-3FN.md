@@ -84,8 +84,10 @@ Las FKs no generan dependencias transitivas.
 | nombre | id_docente | Completa ✅ |
 | correo | id_docente | Completa ✅ |
 | departamento | id_docente | Completa ✅ |
+| id_usuario | id_docente | Completa ✅ |
 
-**✅ Cumple 1FN, 2FN y 3FN**
+**✅ Cumple 1FN, 2FN y 3FN**  
+`id_usuario` es FK, no genera dependencia transitiva porque no determina otros atributos de la tabla.
 
 ---
 

@@ -47,6 +47,7 @@
 
 ### DOCENTE
 - **id_docente** (PK)
+- id_usuario (FK → USUARIOS)
 - nombre
 - correo
 - departamento
@@ -143,6 +144,7 @@
 | ROL | 1 | N — USUARIOS | Un rol puede tener muchos usuarios |
 | USUARIOS | 1 | 1 — ESTUDIANTE | Un usuario puede ser un estudiante |
 | USUARIOS | 1 | 1 — ADMINISTRADOR | Un usuario puede ser un administrador |
+| USUARIOS | 1 | 1 — DOCENTE | Un usuario puede ser un docente |
 | CARRERA | 1 | N — ESTUDIANTE | Una carrera tiene muchos estudiantes |
 | CARRERA | 1 | N — MATERIA | Una carrera tiene muchas materias |
 | DOCENTE | 1 | N — ASIGNACION | Un docente tiene muchas asignaciones |

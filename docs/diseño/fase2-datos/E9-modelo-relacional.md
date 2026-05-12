@@ -44,7 +44,8 @@
 
 **CARRERA** (<u>id_carrera</u>, nombre_carrera, facultad, duracion_semestres)
 
-**DOCENTE** (<u>id_docente</u>, nombre, correo, departamento)
+**DOCENTE** (<u>id_docente</u>, nombre, correo, departamento, *id_usuario*)  
+→ *id_usuario* FK → USUARIOS(id_usuario)
 
 **MATERIA** (<u>id_materia</u>, nombre_materia, codigo_materia, creditos, *id_carrera*)  
 → *id_carrera* FK → CARRERA(id_carrera)
@@ -108,7 +109,7 @@
 | 3 | ESTUDIANTE | id_estudiante | id_usuario, id_carrera | Usuario |
 | 4 | ADMINISTRADOR | id_admin | id_usuario | Usuario |
 | 5 | CARRERA | id_carrera | — | Catálogo |
-| 6 | DOCENTE | id_docente | — | Catálogo |
+| 6 | DOCENTE | id_docente | id_usuario | Catálogo |
 | 7 | MATERIA | id_materia | id_carrera | Académica |
 | 8 | ASIGNACION | id_asignacion | id_materia, id_docente, id_aula, id_estudiante | Relación |
 | 9 | TORRE | id_torre | — | Campus |

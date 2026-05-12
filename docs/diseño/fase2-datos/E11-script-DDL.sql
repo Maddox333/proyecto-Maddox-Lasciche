@@ -84,7 +84,9 @@ CREATE TABLE DOCENTE (
     id_docente      INT AUTO_INCREMENT PRIMARY KEY,
     nombre          VARCHAR(100) NOT NULL,
     correo          VARCHAR(100) NOT NULL UNIQUE,
-    departamento    VARCHAR(100)
+    departamento    VARCHAR(100),
+    id_usuario      INT          NOT NULL UNIQUE,
+    CONSTRAINT fk_docente_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIOS(id_usuario)
 ) ENGINE=InnoDB;
 
 CREATE TABLE MATERIA (

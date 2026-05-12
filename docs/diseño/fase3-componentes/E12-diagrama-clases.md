@@ -95,9 +95,11 @@ Está orientado a la implementación en Django (modelos).
 | - nombre: str |
 | - correo: str |
 | - departamento: str |
+| - usuario: Usuarios |
 +---------------------------+
 | + str(): str |
 | + get_asignaciones(): list|
+| + get_horario(): list |
 +---------------------------+
 
 
@@ -281,6 +283,7 @@ Está orientado a la implementación en Django (modelos).
 | Rol | 1 — N | Usuarios | Asociación |
 | Usuarios | 1 — 1 | Estudiante | Composición |
 | Usuarios | 1 — 1 | Administrador | Composición |
+| Usuarios | 1 — 1 | Docente | Composición |
 | Carrera | 1 — N | Estudiante | Asociación |
 | Carrera | 1 — N | Materia | Asociación |
 | Docente | 1 — N | Asignacion | Asociación |
